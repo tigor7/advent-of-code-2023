@@ -1,5 +1,5 @@
 import ../utils
-import std/[re, strutils, sequtils, parseutils]
+import std/[re, strutils, sequtils, parseutils, math]
 
 
 type
@@ -31,8 +31,6 @@ proc readAlmanacFromFile(filename: string, almanac: var Almanac, seeds: var seq[
 
 
 proc part1(filename: string): int =
-  for i in filename:
-    echo i
   var
     almanac: Almanac
     seeds: seq[int]
@@ -53,16 +51,38 @@ proc part1(filename: string): int =
 
 
 proc part2(filename: string): int =
-  discard
+  var
+    almanac: Almanac
+    seeds: seq[int]
+    minLocation = high(int)
+    last: int
+  readAlmanacFromFile(filename, almanac, seeds)
+  var allSeeds: seq[int]
+  for i in countup(0, floorDiv(seeds.len, 2), 2):
+    for j in seeds[i]..<seeds[i] + seeds[i+1]:
+      allSeeds.add(j)
+  for seed in allSeeds:
+    last = seed
+    for itemMap in almanac:
+      block outer:
+        for map in itemMap:
+          if map.src <= last and last < map.src + map.ranges:
+            last = last - map.src + map.des
+            break outer
+    if last < minLocation:
+      minLocation = last
+  return minLocation
 
 
 when isMainModule:
   benchmark "Part 1":
     let part1Result = part1("input.txt")
     echo "Part 1 result is ", part1Result
-  #  echo "Part 1 result is ", part1Result
+    assert part1Result == 251346198
+  benchmark "Part 2":
+    let part2Result = part2("input.txt")
+    echo "Part 2 result is ", part2Result
+    assert part2Result == 72263011
   # assert part1TestResult == 13
   # assert part2TestResult == 30
 
-  # assert part1Result == 26218
-  # assert part2Result == 9997537
