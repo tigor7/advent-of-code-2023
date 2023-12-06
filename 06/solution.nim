@@ -18,6 +18,14 @@ proc readRacesFromFile(filename: string): seq[Race] =
   for i in 0..<times.len:
     result.add(Race(distance: parseInt(distances[i]), time: parseInt(times[i])))
 
+proc readRaceFromFile(filename: string): Race =
+  let f = open(filename)
+  defer: f.close
+  let
+    time = readLine(f).replace(re"\s+").findAll(re"\d+")[0]
+    distance = readLine(f).replace(re"\s+").findAll(re"\d+")[0]
+  return Race(time: parseInt(time), distance: parseInt(distance))
+
 proc part1(filename: string): int =
   result = 1
   let races = readRacesFromFile(filename)
@@ -29,10 +37,12 @@ proc part1(filename: string): int =
     result *= winning
 
 
-
-
 proc part2(filename: string): int =
-  discard
+  let race = readRaceFromFile(filename)
+  echo race
+  for i in 1..<race.time:
+    if (i * (race.time - i)) > race.distance:
+      result += 1
 
 
 when isMainModule:
