@@ -52,6 +52,20 @@ proc getKind(cards: string): Kind =
     return Kind.pair
   return Kind.single
 
+proc getKind2(cards: string): Kind =
+  if cards == "JJJJJ":
+    return Kind.five
+  var
+    frec = toCountTable(cards)
+    first = frec.largest
+
+  if first[0] != 'J':
+    return getKind(cards.replace('J', first[0]))
+  frec.del first[0]
+  let second = frec.largest
+  return getKind(cards.replace('J', second[0]))
+
+
 
 proc readHands(filename: string): seq[Hand] =
   for line in lines filename:
@@ -74,16 +88,35 @@ proc part1(filename: string): int =
     result += hand.bid * (i + 1)
 
 proc part2(filename: string): int =
-  discard
+  var hands: seq[Hand]
+  for line in lines filename:
+    let
+      str = line.split
+      hand = Hand(cards: str[0], bid: parseInt(str[1]), kind: getKind2(str[0]))
+    hands.add hand
+  hands.sort do (x, y: Hand) -> int:
+    if ord(x.kind) != ord(y.kind):
+      return cmp(ord(x.kind), ord(y.kind))
+    for i in 0..<5:
+      if x.cards[i] != y.cards[i]:
+        if x.cards[i] == 'J':
+          return -1
+        if y.cards[i] == 'J':
+          return 1
+        return cmp(lookup[x.cards[i]], lookup[y.cards[i]])
 
+
+  for i, hand in hands:
+    result += hand.bid * (i + 1)
 
 when isMainModule:
   benchmark "Part 1":
     let part1Result = part1("input.txt")
     echo "Part 1 result is ", part1Result
+
     assert part1Result == 253866470
 
   benchmark "Part 2":
-    let part2Result = part2("test.txt")
+    let part2Result = part2("input.txt")
     echo "Part 2 result is ", part2Result
-    # assert part2Result == 72263011
+    assert part2Result == 254494947
