@@ -1,4 +1,4 @@
-import std/[strutils, times, os]
+import std/[strutils, times]
 
 template benchmark*(benchmarkName: string, code: untyped) =
   block:
