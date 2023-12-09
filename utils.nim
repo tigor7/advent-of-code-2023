@@ -1,9 +1,8 @@
-import std/[strutils, times]
+import std/[monotimes, times]
 
 template benchmark*(benchmarkName: string, code: untyped) =
   block:
-    let t0 = epochTime()
+    let t0 = getMonoTime()
     code
-    let elapsed = epochTime() - t0
-    let elapsedStr = elapsed.formatFloat(format = ffDecimal, precision = 8)
-    echo "CPU Time [", benchmarkName, "] ", elapsedStr, "s"
+    let elapsed = getMonoTime() - t0
+    echo "CPU Time [", benchmarkName, "] ", elapsed.inMilliseconds, "ms"
