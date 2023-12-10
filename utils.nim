@@ -5,4 +5,4 @@ template benchmark*(benchmarkName: string, code: untyped) =
     let t0 = getMonoTime()
     code
     let elapsed = getMonoTime() - t0
-    echo "CPU Time [", benchmarkName, "] ", elapsed.inMilliseconds, "ms"
+    echo "CPU Time [", benchmarkName, "] ", elapsed.inMilliseconds, " ms"
