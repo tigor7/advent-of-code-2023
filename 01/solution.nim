@@ -1,3 +1,4 @@
+import ../utils
 import std/[strutils, re, tables]
 
 var lookup = {
@@ -11,6 +12,11 @@ var lookup = {
   "eight": 8,
   "nine": 9
 }.toTable
+
+proc getNum(num: string): int =
+  if num in "0".."9":
+    return parseInt(num)
+  return lookup[num]
 
 
 proc part1(filename: string): int =
@@ -30,19 +36,16 @@ proc part2(filename: string): int =
       nums.add(line[bounds[0]..bounds[1]])
       bounds = findBounds(line, pattern,
           bounds[0] + 1)
-    if nums[0] in lookup:
-      result += lookup[nums[0]] * 10
-    else:
-      result += parseInt(nums[0]) * 10
-
-    if nums[^1] in lookup:
-      result += lookup[nums[^1]]
-    else:
-      result += parseInt(nums[^1])
+    result += getNum(nums[0]) * 10 + getNum(nums[^1])
 
 
 when isMainModule:
-  # Test
-  assert part1("input.txt") == 54667
-  assert part2("input.txt") == 54203
-  echo "Test passed"
+  benchmark "Part 1":
+    let part1Result = part1("input.txt")
+    echo "Part 1 result is ", part1Result
+    assert part1Result == 54667
+
+  benchmark "Part 2":
+    let part2Result = part2("input.txt")
+    echo "Part 2 result is ", part2Result
+    assert part2Result == 54203
