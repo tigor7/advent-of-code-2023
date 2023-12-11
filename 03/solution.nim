@@ -1,4 +1,16 @@
-import std/strutils
+import ../utils
+import std/[strutils, math]
+
+const moves = [
+  (1, 0),
+  (-1, 0),
+  (0, 1),
+  (0, -1),
+  (-1, -1),
+  (1, 1),
+  (-1, 1),
+  (1, -1)
+]
 
 proc readFile(filename: string): seq[seq[char]] =
   for line in lines filename:
@@ -7,91 +19,50 @@ proc readFile(filename: string): seq[seq[char]] =
       inner.add(ch)
     result.add(inner)
 
-proc checkSurrodings(sche: seq[seq[char]], seen: seq[seq[bool]], i: int,
-    j: int): tuple =
-  if i > 0 and not seen[i-1][j] and sche[i-1][j] in '0'..'9':
-    return (i-1, j)
-  elif j > 0 and not seen[i][j-1] and sche[i][j-1] in '0'..'9':
-    return (i, j-1)
-  elif i < sche.len - 1 and not seen[i+1][j] and sche[i+1][j] in '0'..'9':
-    return (i + 1, j)
-  elif j < sche[i].len - 1 and not seen[i][j+1] and sche[i][j+1] in '0'..'9':
-    return (i, j+1)
-  elif i > 0 and j > 0 and not seen[i-1][j-1] and sche[i-1][j-1] in '0'..'9':
-    return (i-1, j-1)
-  elif i > 0 and j < sche[i].len - 1 and not seen[i-1][j+1] and sche[i-1][
-      j+1] in '0'..'9':
-    return (i-1, j+1)
-  elif i < sche.len - 1 and j > 0 and not seen[i+1][j-1] and sche[i+1][j-1] in '0'..'9':
-    return (i+1, j-1)
-  elif i < sche.len - 1 and j < sche[i].len - 1 and not seen[i+1][j+1] and sche[
-      i+1][j+1] in '0'..'9':
-    return (i+1, j+1)
-  return (-1, -1)
-
-proc getNum(sche: seq[seq[char]], seen: var seq[seq[bool]], i, j: int): int =
+proc getAdjNums(sche: seq[seq[char]], i, j: int): seq[int] =
   var
-    strNum = $sche[i][j]
-    k = 1
-  seen[i][j] = true
-  # asume 3 digit number are posible
-  while j - k >= 0 and sche[i][j-k] in '0'..'9':
-    strNum = sche[i][j-k] & strNum
-    seen[i][j-k] = true
-    k += 1
-  k = 1
-  while j + k < sche[i].len and sche[i][j+k] in '0'..'9':
-    strNum = strNum & sche[i][j+k]
-    seen[i][j+k] = true
-    k += 1
-  return parseInt(strNum)
-
+    seen: seq[(int, int)]
+  for (r, c) in moves:
+    if (i+r, j+c) in seen:
+      continue
+    var
+      pos = 0
+      str = ""
+    if sche[i+r][j+c].isDigit:
+      # Get start of digit
+      while j+c + pos - 1 >= 0 and j + c + pos - 1 < sche[i+r].len and sche[
+          i+r][j + c + pos - 1].isDigit:
+        dec pos
+      while j+c+pos < sche[i+r].len and sche[i+r][j+c+pos].isDigit:
+        seen.add((i+r, j+c+pos))
+        str.add(sche[i+r][j+c+pos])
+        inc pos
+      result.add parseInt(str)
 
 proc part1(filename: string): int =
-  var
-    seen: seq[seq[bool]]
-    sche = readFile(filename)
-  for i in 0..<sche.len:
-    var inner: seq[bool]
-    for j in 0..<sche.len:
-      inner.add(false)
-    seen.add(inner)
+  let sche = readFile(filename)
   for i in 0..<sche.len:
     for j in 0..<sche[i].len:
-      # Check simbol
-      if sche[i][j] != '.' and sche[i][j] notin '0'..'9':
-        var posFound = checkSurrodings(sche, seen, i, j)
-        while posFound[0] != -1 and posFound[1] != -1:
-          result += getNum(sche, seen, posFound[0], posFound[1])
-          posFound = checkSurrodings(sche, seen, i, j)
+      if sche[i][j] notin '0'..'9' and sche[i][j] != '.':
+        result += sum(getAdjNums(sche, i, j))
 
 proc part2(filename: string): int =
-  var
-    seen: seq[seq[bool]]
-    sche = readFile(filename)
+  let sche = readFile(filename)
   for i in 0..<sche.len:
-    var inner: seq[bool]
-    for j in 0..<sche.len:
-      inner.add(false)
-    seen.add(inner)
-  for i in 0..<sche.len:
-    for j in 0..<sche[i].len:
-      # Check simbol
-      if sche[i][j] == '*':
-        let firstFound = checkSurrodings(sche, seen, i, j)
-        if firstFound == (-1, -1):
-          continue
-        let
-          firstNum = getNum(sche, seen, firstFound[0], firstFound[1])
-          secondFound = checkSurrodings(sche, seen, i, j)
-        if secondFound == (-1, -1):
-          continue
-        let secondNum = getNum(sche, seen, secondFound[0], secondFound[1])
-        result += firstNum * secondNum
-when isMainModule:
-  let
-    part1Result = part1("input.txt")
-    part2Result = part2("input.txt")
-  assert part1Result == 526404
-  assert part2Result == 84399773
+    for j in 0..<sche[0].len:
+      if sche[i][j] notin '0'..'9' and sche[i][j] != '.':
+        let nums = getAdjNums(sche, i, j)
+        if nums.len == 2:
+          result += nums[0] * nums[1]
 
+
+when isMainModule:
+  benchmark "Part 1":
+    let part1Result = part1("input.txt")
+    echo "Part 1 result is ", part1Result
+    assert part1Result == 526404
+
+  benchmark "Part 2":
+    let part2Result = part2("input.txt")
+    echo "Part 2 result is ", part2Result
+    assert part2Result == 84399773
