@@ -1,5 +1,5 @@
 import ../utils
-import std/[strutils, sequtils, algorithm, re]
+import std/[re]
 
 type
   Pattern = seq[seq[char]]
@@ -19,13 +19,15 @@ proc readPattern(filename: string): seq[Pattern] =
     p.add inner
   result.add p
 
-proc checkVertical(p: Pattern, x: int): bool =
+proc checkVertical(p: Pattern, x: int, dis: var int): bool =
+  result = true
   for i in 0..<p.len:
     for j in x..<p[i].len:
       let offset = j - x + 1
       if x-offset >= 0 and x-offset < p[i].len and p[i][j] != p[i][x-offset]:
-        return false
-  return true
+        inc dis
+        result = false
+
 
 proc transpose(p: Pattern): Pattern =
   for j in 0..<p[0].len:
@@ -34,48 +36,39 @@ proc transpose(p: Pattern): Pattern =
       inner.add(p[i][j])
     result.add inner
 
-
-
-
 proc part1(filename: string): int =
   let patterns = readPattern(filename)
   for pattern in patterns:
+    var dis = 0
     for x in 1..<pattern[0].len:
-      if checkVertical(pattern, x):
+      if checkVertical(pattern, x, dis):
         result += x
     let s = transpose(pattern)
     for y in 1..<s[0].len:
-      if checkVertical(s, y):
+      if checkVertical(s, y, dis):
         result += y * 100
-
-
-
-
 
 proc part2(filename: string): int =
   let patterns = readPattern(filename)
   for pattern in patterns:
-    for i in 0..<pattern.len:
-      for j in 0..<pattern[i].len:
-        var pattern = pattern
-        if pattern[i][j] == '#':
-          pattern[i][j] = '.'
-        else:
-          pattern[i][j] = '#'
-        for x in 1..<pattern[0].len:
-          if checkVertical(pattern, x):
-            result += x
-        let s = transpose(pattern)
-        for y in 1..<s[0].len:
-          if checkVertical(s, y):
-            result += y * 100
+    for x in 1..<pattern[0].len:
+      var dis = 0
+      discard checkVertical(pattern, x, dis)
+      if dis == 1:
+        result += x
+    let s = transpose(pattern)
+    for y in 1..<s[0].len:
+      var dis = 0
+      discard checkVertical(s, y, dis)
+      if dis == 1:
+        result += y * 100
 when isMainModule:
   benchmark "Part 1":
     let part1Result = part1("input.txt")
     echo "Part 1 result is ", part1Result
     assert part1Result == 31739
-
+  echo ""
   benchmark "Part 2":
-    let part2Result = part2("test.txt")
+    let part2Result = part2("input.txt")
     echo "Part 2 result is ", part2Result
     # assert part2Result == 1129
