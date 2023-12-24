@@ -18,13 +18,12 @@ proc readMatrix*(filename: string): Matrix[char] =
       inner.add Cell[char](val: ch)
     result.add inner
 
-proc part1(filename: string): int =
+proc energizedTiles(grid: Matrix[char], initialPos, initialDir: (int, int)): int =
   var
-    grid = readMatrix(filename)
     beams: Deque[Beam]
     seen = newTable[(int, int), (int, int)]()
 
-  beams.addLast(Beam(pos: (0, 0), dir: (0, 1)))
+  beams.addLast(Beam(pos: initialPos, dir: initialDir))
 
   while beams.len > 0:
     var beam = beams.popFirst()
@@ -58,8 +57,29 @@ proc part1(filename: string): int =
       beam.pos = beam.pos + beam.dir
   result = seen.len
 
+proc part1(filename: string): int =
+  var grid = readMatrix(filename)
+  result = energizedTiles(grid, (0, 0), (0, 1))
+
 proc part2(filename: string): int =
-  discard
+  var grid = readMatrix(filename)
+
+  # First row
+  for i in 0 ..< grid[0].len:
+    let e = energizedTiles(grid, (0, i), (1, 0))
+    if e > result:
+      result = e
+    let s = energizedTiles(grid, (grid[0].len - 1, i), (-1, 0))
+    if s > result:
+      result = s
+
+  for i in 0 ..< grid.len:
+    let e = energizedTiles(grid, (i, 0), (0, 1))
+    if e > result:
+      result = e
+    let s = energizedTiles(grid, (i, grid.len - 1), (0, -1))
+    if s > result:
+      result = s
 
 when isMainModule:
   benchmark "Part 1":
@@ -68,6 +88,6 @@ when isMainModule:
     assert part1Result == 7498
   echo ""
   benchmark "Part 2":
-    let part2Result = part2("test.txt")
+    let part2Result = part2("input.txt")
     echo "Part 2 result is ", part2Result
-    # assert part2Result == 0
+    assert part2Result == 7846
