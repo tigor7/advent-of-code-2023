@@ -1,11 +1,44 @@
 import std/[monotimes, times, macros]
 
+proc `+`*(a, b: (int, int)): (int, int) =
+  return (a[0] + b[0], a[1] + b[1])
+
+proc `-`*(a, b: (int, int)): (int, int) =
+  return (a[0] - b[0], a[1] - b[1])
+
+type
+  Cell*[T] = object
+    val*: T
+    dis*: int
+  Matrix*[T] = seq[seq[Cell[T]]]
+
+proc get*[T](m: Matrix[T], i, j: int): T =
+  result = m[i][j].val
+
+proc get*[T](m: Matrix[T], n: (int, int)): T =
+  result = m.get(n[0], n[1])
+
+proc display*(m: Matrix) =
+  for i in 0..<m.len:
+    for j in 0..<m[i].len:
+      stdout.write m.get(i, j), " "
+    echo ""
+
+proc checkBounds*(m: Matrix, i, j: int): bool =
+  result = i >= 0 and i < m.len and j >= 0 and j < m[i].len
+
+proc `in`*(c: (int, int), m: Matrix): bool =
+  result = checkBounds(m, c[0], c[1])
+
 template benchmark*(benchmarkName: string, code: untyped) =
   block:
     let t0 = getMonoTime()
     code
     let elapsed = getMonoTime() - t0
-    echo "CPU Time [", benchmarkName, "] ", elapsed.inMilliseconds, " ms"
+    var formated = $elapsed.inMicroseconds & " us"
+    if elapsed.inMicroseconds > 1000:
+      formated = $elapsed.inMilliseconds & " ms"
+    echo "CPU Time [", benchmarkName, "] ", formated
 
 
 proc displayMatrix*[T](matrix: seq[seq[T]]) =
